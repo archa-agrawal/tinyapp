@@ -21,11 +21,15 @@ app.get("/hello", (req, res) => {
 app.get('/urls', (req, res) => {
   const templateVar = {urls: urlDatabase};
   res.render('urls_index', templateVar)
-})
+});
+app.get('/urls/new', (req, res) => {
+  res.render('urls_new');
+});
 app.get('/urls/:id', (req, res) => {
   const templateVar = {id: req.params.id, longURL: urlDatabase[req.params.id]};
   res.render('urls_show', templateVar)
-})
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
