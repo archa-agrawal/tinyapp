@@ -18,5 +18,11 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
+    <h5>signed in as <%=username%>!</h5>
+    <form method="POST" action="/login">
+      <label for="username">username</label>
+      <input id="username" name="username">
+      <button>sign in</button>
+    </form>
   </nav>
 </header>
