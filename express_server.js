@@ -10,6 +10,10 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+const generateRandomString = () => {
+  const randString = Math.random().toString(36).slice(2)
+  return randString.substring(0, 6)
+}
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -27,20 +31,23 @@ app.get('/urls', (req, res) => {
 app.get('/urls/new', (req, res) => {
   res.render('urls_new');
 });
+app.post('/urls', (req, res) => {
+  const id = generateRandomString();
+  const url = req.body; 
+  urlDatabase[id] = url.longURL
+  res.redirect(`/urls/${id}`);
+});
 app.get('/urls/:id', (req, res) => {
   const templateVar = {id: req.params.id, longURL: urlDatabase[req.params.id]};
   res.render('urls_show', templateVar)
 });
-app.post('/urls', (req, res) => {
-  console.log(req.body);
-  res.send("Ok");
-});
-
+app.get('/u/:id', (req, res) => {
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  res.redirect(longURL);
+})
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-const generateRandomString = () => {
-  const randString = Math.random().toString(36).slice(2)
-  return randString.substring(0, 6)
-}
+
