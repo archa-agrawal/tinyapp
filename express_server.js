@@ -91,7 +91,11 @@ app.post('/urls/:id/update', (req, res) => {
   urlDatabase[id] = newURL;
   res.redirect('/urls');
 });
-
+app.post('/login', (req, res) => {
+  const username = (req.body).username;
+  res.cookie('username', username);
+  res.redirect('/urls');
+});
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
   res.redirect('/urls');
@@ -100,6 +104,14 @@ app.post('/register', (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  if (email === '' || password === '') {
+    return res.send('Error:400; Invalid email or password')
+  }
+  for (const key in users) {
+    if (email === users[key].email) {
+      return res.send('Error:400; user already exists')
+    }
+  }
   users[id] = {id, email, password };
   console.log(users)
   res.cookie('user_id', id)
