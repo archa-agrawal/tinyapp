@@ -33,6 +33,10 @@ app.get('/urls/new', (req, res) => {
   const templateVar = {username: req.cookies["username"]}
   res.render('urls_new', templateVar);
 });
+app.get('/register', (req, res) => {
+  const templateVar = {username: req.cookies["username"]}
+  res.render('urls_registration', templateVar);
+});
 app.post('/urls', (req, res) => {
   const id = generateRandomString();
   const url = req.body; 
