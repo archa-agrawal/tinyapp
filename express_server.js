@@ -27,7 +27,22 @@ const users = {
 
 const generateRandomString = () => {
   const randString = Math.random().toString(36).slice(2);
-  return randString.substring(0, 6)
+  return randString.substring(0, 6);
+}
+
+const lookForObjectKeys = (obj, objKey, qKey) => {
+  for (const key in obj) {
+    if (qKey === obj[key][objKey]) {
+      return true;
+    }
+  }
+  return false;
+}
+const findKeyByVal = (obj, objKey, value) => {
+  for (const key in obj) {
+    if(value === obj[key][objKey])
+    return key
+  }
 }
 
 app.get("/", (req, res) => {
@@ -56,6 +71,12 @@ app.get('/register', (req, res) => {
   const user = users[id]
   const templateVar = {user: user,}
   res.render('urls_registration', templateVar);
+});
+app.get('/login', (req, res) => {
+  const id = req.cookies['user_id']
+  const user = users[id]
+  const templateVar = {user: user,}
+  res.render('urls_login', templateVar);
 });
 app.post('/urls', (req, res) => {
   const id = generateRandomString();
@@ -92,8 +113,15 @@ app.post('/urls/:id/update', (req, res) => {
   res.redirect('/urls');
 });
 app.post('/login', (req, res) => {
-  const username = (req.body).username;
-  res.cookie('username', username);
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!lookForObjectKeys(users, 'email', email)) {
+    return res.send('Error: 403; email not found')
+  } else if (!lookForObjectKeys(users, 'password', password)) {
+    return res.send('Error: 403; password does not match')
+  }
+  const id = findKeyByVal(users, 'email', email);
+  res.cookie('user_id', id)
   res.redirect('/urls');
 });
 app.post('/logout', (req, res) => {
@@ -107,13 +135,10 @@ app.post('/register', (req, res) => {
   if (email === '' || password === '') {
     return res.send('Error:400; Invalid email or password')
   }
-  for (const key in users) {
-    if (email === users[key].email) {
-      return res.send('Error:400; user already exists')
-    }
+  if (lookForObjectKeys(users, 'email', email)) {
+    return res.send('Error:400; user already exists')
   }
   users[id] = {id, email, password };
-  console.log(users)
   res.cookie('user_id', id)
   res.redirect('/urls')
 })
