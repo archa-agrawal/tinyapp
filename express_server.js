@@ -16,7 +16,7 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "purple",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -62,52 +62,84 @@ app.get('/urls', (req, res) => {
 });
 app.get('/urls/new', (req, res) => {
   const id = req.cookies['user_id']
+  if (!id) {
+    return res.redirect('/login');
+  }
   const user = users[id]
   const templateVar = {user: user,}
-  res.render('urls_new', templateVar);
+  return res.render('urls_new', templateVar);
 });
 app.get('/register', (req, res) => {
   const id = req.cookies['user_id']
-  const user = users[id]
-  const templateVar = {user: user,}
+  if (id) {
+    res.redirect('/urls');
+  }
+  const templateVar = {user: undefined}
   res.render('urls_registration', templateVar);
 });
 app.get('/login', (req, res) => {
   const id = req.cookies['user_id']
-  const user = users[id]
-  const templateVar = {user: user,}
+  if (id) {
+    res.redirect('/urls');
+  }
+  const templateVar = {user: undefined}
   res.render('urls_login', templateVar);
 });
 app.post('/urls', (req, res) => {
+  if (!req.cookies['user_id']) {
+    res.status(401)
+    return res.send('Error : 401, user not looged in')
+  }
   const id = generateRandomString();
   const url = req.body; 
   urlDatabase[id] = url.longURL
-  res.redirect(`/urls/${id}`);
+  return res.redirect(`/urls/${id}`);
 });
 app.get('/urls/:id', (req, res) => {
-  const id = req.cookies['user_id']
-  const user = users[id]
+  const id = req.params.id;
+  if (!urlDatabase[id]) {
+    res.status(404);
+    return res.send('Error : 404, id not found')
+  }
+  const userId = req.cookies['user_id']
+  const user = users[userId]
   const templateVar = {user: user, id: req.params.id, longURL: urlDatabase[req.params.id]};
   res.render('urls_show', templateVar)
 });
 app.get('/u/:id', (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id];
-  res.redirect(longURL);
+  if (!urlDatabase[id]) {
+    res.status(404);
+    return res.send('Error : 404, id not found')
+  }
+  res.redirect(urlDatabase[id]);
 });
 app.post('/urls/:id/delete', (req, res) => {
   const id = req.params.id;
+  if (!urlDatabase[id]) {
+    res.status(404);
+    return res.send('Error : 404, id not found')
+  }
   delete urlDatabase[id];
   res.redirect('/urls');
 })
 app.post('/urls/:id/edit', (req, res) => {
-  const id = req.cookies['user_id']
-  const user = users[id]
+  const id = req.params.id;
+  if (!urlDatabase[id]) {
+    res.status(404);
+    return res.send('Error : 404, id not found')
+  }
+  const userId = req.cookies['user_id']
+  const user = users[userId]
   const templateVar = {user: user, id: req.params.id, longURL: urlDatabase[req.params.id]};
   res.render('urls_show', templateVar)
 });
 app.post('/urls/:id/update', (req, res) => {
   const id = req.params.id
+  if (!urlDatabase[id]) {
+    res.status(404);
+    return res.send('Error : 404, id not found')
+  }
   const newURL = (req.body)['New URL']
   urlDatabase[id] = newURL;
   res.redirect('/urls');
@@ -116,8 +148,10 @@ app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if (!lookForObjectKeys(users, 'email', email)) {
+    res.status(403)
     return res.send('Error: 403; email not found')
   } else if (!lookForObjectKeys(users, 'password', password)) {
+    res.status(403)
     return res.send('Error: 403; password does not match')
   }
   const id = findKeyByVal(users, 'email', email);
@@ -133,9 +167,11 @@ app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if (email === '' || password === '') {
+    res.status(400)
     return res.send('Error:400; Invalid email or password')
   }
   if (lookForObjectKeys(users, 'email', email)) {
+    res.status(400)
     return res.send('Error:400; user already exists')
   }
   users[id] = {id, email, password };
