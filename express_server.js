@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieSession = require('cookie-session')
 const bcrypt = require("bcryptjs");
+const getUserByEmail = require('./helper')
 const app = express();
 const PORT = 8080;
 
@@ -29,14 +30,7 @@ const generateRandomString = () => {
   return randString.substring(0, 6);
 };
 
-const lookForObjectKeys = (obj, objKey, qKey) => {
-  for (const key in obj) {
-    if (qKey === obj[key][objKey]) {
-      return true;
-    }
-  }
-  return false;
-};
+
 const findKeyByVal = (obj, objKey, value) => {
   for (const keys in obj) {
     if (value === obj[keys][objKey])
@@ -238,7 +232,7 @@ app.post('/urls/:id/update', (req, res) => {
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  if (!lookForObjectKeys(users, 'email', email)) {
+  if (!getUserByEmail(users, email)) {
     res.status(403);
     return res.send('Error: 403; email not found');
   } 
@@ -267,7 +261,7 @@ app.post('/register', (req, res) => {
     res.status(400);
     return res.send('Error:400; Invalid email or password');
   }
-  if (lookForObjectKeys(users, 'email', email)) {
+  if (getUserByEmail(users, email)) {
     res.status(400);
     return res.send('Error:400; user already exists');
   }
