@@ -1,11 +1,14 @@
 const express = require("express");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session')
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
 
 app.set('view engine', 'ejs');
-app.use(cookieParser());
+app.use(cookieSession({
+  name: "session",
+  keys: ['really strong key', '13678g!hui76?']
+}))
 app.use(express.urlencoded({ extended: true }));
 
 const urlDatabase = {
@@ -19,18 +22,7 @@ const urlDatabase = {
   },
 };
 
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-};
+const users = {};
 
 const generateRandomString = () => {
   const randString = Math.random().toString(36).slice(2);
@@ -46,9 +38,9 @@ const lookForObjectKeys = (obj, objKey, qKey) => {
   return false;
 };
 const findKeyByVal = (obj, objKey, value) => {
-  for (const key in obj) {
-    if (value === obj[key][objKey])
-      return key;
+  for (const keys in obj) {
+    if (value === obj[keys][objKey])
+      return keys;
   }
 };
 
@@ -72,55 +64,80 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 app.get('/urls', (req, res) => {
-  const id = req.cookies['user_id'];
-  if (!id) {
+  const userId = req.session.user_id;
+  if (!userId) {
+    res.status(401);
     return res.send('Error: 401; User not logged in!');
   }
-  const userUrlDatabase = urlsForUser(id);
-  const user = users[id];
+  const user = users[userId];
+  if(!user){
+    req.session.user_id = null;
+    res.status(404)
+    return res.send('Error: 404; User not found!');
+  }
+  const userUrlDatabase = urlsForUser(userId);
   const templateVar = {user: user, urls: userUrlDatabase};
   res.render('urls_index', templateVar);
 });
+
 app.get('/urls/new', (req, res) => {
-  const id = req.cookies['user_id'];
-  if (!id) {
+  const userId = req.session.user_id;
+  if (!userId || !users[userId]) {
+    req.session.user_id = null;
     return res.redirect('/login');
   }
-  const user = users[id];
+  const user = users[userId];
   const templateVar = {user: user,};
   return res.render('urls_new', templateVar);
 });
+
 app.get('/register', (req, res) => {
-  const id = req.cookies['user_id'];
-  if (id) {
-    res.redirect('/urls');
+  const userId = req.session.user_id;
+  if (userId && users[userId]) {
+    return res.redirect('/urls');
   }
+  req.session.user_id = null;
   const templateVar = {user: undefined};
   res.render('urls_registration', templateVar);
 });
+
 app.get('/login', (req, res) => {
-  const id = req.cookies['user_id'];
-  if (id) {
+  const userId = req.session.user_id;
+  if (userId && users[userId]) {
     return res.redirect('/urls');
   }
+  req.session.user_id = null;
   const templateVar = {user: undefined};
   res.render('urls_login', templateVar);
 });
+
 app.post('/urls', (req, res) => {
-  if (!req.cookies['user_id']) {
+  const userId = req.session.user_id;
+  if (!userId) {
     res.status(401);
     return res.send('Error : 401, user not looged in');
   }
+  if(!users[userId]){
+    req.session.user_id = null;
+    res.status(404)
+    return res.send('Error: 404; User not found!');
+  }
   const id = generateRandomString();
   const url = req.body;
-  urlDatabase[id] = {'longURL': url.longURL, userID: req.cookies['user_id'] };
+  urlDatabase[id] = {'longURL': url.longURL, userID: userId };
   console.log(urlDatabase);
   return res.redirect(`/urls/${id}`);
 });
+
 app.get('/urls/:id', (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session.user_id;
   if (!userId) {
     return res.send('Error : 401, user not looged in');
+  }
+  if(!users[userId]){
+    req.session.user_id = null;
+    res.status(404)
+    return res.send('Error: 404; User not found!');
   }
   const id = req.params.id;
   if (!urlDatabase[id]) {
@@ -136,6 +153,7 @@ app.get('/urls/:id', (req, res) => {
   const templateVar = {user: user, id: req.params.id, longURL: urlDatabase[req.params.id].longURL};
   res.render('urls_show', templateVar);
 });
+
 app.get('/u/:id', (req, res) => {
   const id = req.params.id;
   if (!urlDatabase[id]) {
@@ -144,11 +162,17 @@ app.get('/u/:id', (req, res) => {
   }
   res.redirect(urlDatabase[id].longURL);
 });
+
 app.post('/urls/:id/delete', (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session.user_id;
   if (!userId) {
     res.status(401);
     return res.send('Error : 401, user not looged in');
+  }
+  if(!users[userId]){
+    req.session.user_id = null;
+    res.status(404)
+    return res.send('Error: 404; User not found!');
   }
   const id = req.params.id;
   if (!urlDatabase[id]) {
@@ -163,11 +187,17 @@ app.post('/urls/:id/delete', (req, res) => {
   delete urlDatabase[id];
   res.redirect('/urls');
 });
+
 app.post('/urls/:id/edit', (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session.user_id;
   if (!userId) {
     res.status(401);
     return res.send('Error : 401, user not looged in');
+  }
+  if(!users[userId]){
+    req.session.user_id = null;
+    res.status(404)
+    return res.send('Error: 404; User not found!');
   }
   const id = req.params.id;
   if (!urlDatabase[id]) {
@@ -179,12 +209,22 @@ app.post('/urls/:id/edit', (req, res) => {
     res.status(403);
     return res.send('Error: 403, access denied');
   }
-  
   const user = users[userId];
   const templateVar = {user: user, id: req.params.id, longURL: urlDatabase[req.params.id].longURL};
   res.render('urls_show', templateVar);
 });
+
 app.post('/urls/:id/update', (req, res) => {
+  const userId = req.session.user_id;
+  if (!userId) {
+    res.status(401);
+    return res.send('Error : 401, user not looged in');
+  }
+  if(!users[userId]){
+    req.session.user_id = null;
+    res.status(404)
+    return res.send('Error: 404; User not found!');
+  }
   const id = req.params.id;
   if (!urlDatabase[id]) {
     res.status(404);
@@ -194,6 +234,7 @@ app.post('/urls/:id/update', (req, res) => {
   urlDatabase[id].longURL = newURL;
   res.redirect('/urls');
 });
+
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -202,19 +243,20 @@ app.post('/login', (req, res) => {
     return res.send('Error: 403; email not found');
   } 
   const id = findKeyByVal(users, 'email', email);
-  console.log(id)
   const userPassword = users[id].hashedPassword;
   if (!bcrypt.compareSync(password, userPassword)) {
     res.status(403);
     return res.send('Error: 403; password does not match');
   }
-  res.cookie('user_id', id);
+  req.session.user_id = id;
   res.redirect('/urls');
 });
+
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session.user_id = null;
   res.redirect('/urls');
 });
+
 app.post('/register', (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
@@ -230,8 +272,7 @@ app.post('/register', (req, res) => {
     return res.send('Error:400; user already exists');
   }
   users[id] = {id, email, hashedPassword };
-  console.log(users)
-  res.cookie('user_id', id);
+  req.session.user_id = id;
   res.redirect('/urls');
 });
 
