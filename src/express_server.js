@@ -4,7 +4,6 @@ const bcrypt = require("bcryptjs");
 const {
   getUserByEmail,
   generateRandomString,
-  findKeyByVal,
   urlsForUser,
 } = require("./helper");
 
@@ -48,7 +47,7 @@ app.get("/urls", (req, res) => {
   }
   const user = users[userId];
   if (!user) {
-    req.session = null; // eslint-disable-line camelcase
+    req.session = null;
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -60,7 +59,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userId = req.session.user_id;
   if (!userId || !users[userId]) {
-    req.session = null; // eslint-disable-line camelcase
+    req.session = null;
     return res.redirect("/login");
   }
   const user = users[userId];
@@ -73,7 +72,7 @@ app.get("/register", (req, res) => {
   if (userId && users[userId]) {
     return res.redirect("/urls");
   }
-  req.session = null; // eslint-disable-line camelcase
+  req.session = null;
   const templateVar = { user: undefined };
   res.render("urls_registration", templateVar);
 });
@@ -83,7 +82,7 @@ app.get("/login", (req, res) => {
   if (userId && users[userId]) {
     return res.redirect("/urls");
   }
-  req.session = null; // eslint-disable-line camelcase
+  req.session = null;
   const templateVar = { user: undefined };
   res.render("urls_login", templateVar);
 });
@@ -95,7 +94,7 @@ app.post("/urls", (req, res) => {
     return res.send("Error : 401, user not looged in");
   }
   if (!users[userId]) {
-    req.session = null; // eslint-disable-line camelcase
+    req.session = null;
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -111,7 +110,7 @@ app.get("/urls/:id", (req, res) => {
     return res.send("Error : 401, user not looged in");
   }
   if (!users[userId]) {
-    req.session = null; // eslint-disable-line camelcase
+    req.session = null;
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -150,7 +149,7 @@ app.post("/urls/:id/delete", (req, res) => {
     return res.send("Error : 401, user not looged in");
   }
   if (!users[userId]) {
-    req.session = null; // eslint-disable-line camelcase
+    req.session = null;
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -175,7 +174,7 @@ app.post("/urls/:id/edit", (req, res) => {
     return res.send("Error : 401, user not looged in");
   }
   if (!users[userId]) {
-    req.session = null; // eslint-disable-line camelcase
+    req.session = null;
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -205,7 +204,7 @@ app.post("/urls/:id/update", (req, res) => {
     return res.send("Error : 401, user not looged in");
   }
   if (!users[userId]) {
-    req.session = null; // eslint-disable-line camelcase
+    req.session = null;
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -226,7 +225,7 @@ app.post("/login", (req, res) => {
     res.status(403);
     return res.send("Error: 403; email not found");
   }
-  const id = findKeyByVal(users, "email", email);
+  const id = getUserByEmail(users, email);
   const userPassword = users[id].hashedPassword;
   if (!bcrypt.compareSync(password, userPassword)) {
     res.status(403);
@@ -237,7 +236,7 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  req.session = null; // eslint-disable-line camelcase
+  req.session = null;
   res.redirect("/login");
 });
 

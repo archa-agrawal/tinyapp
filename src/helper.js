@@ -1,7 +1,7 @@
 /**
  * This function returns user that has the given email id.
- * @param {object} users
- * @param {string} email
+ * @param {object} users users database
+ * @param {string} email email to search
  * @returns {string} Id of the maching user
  */
 const getUserByEmail = (users, email) => {
@@ -12,17 +12,21 @@ const getUserByEmail = (users, email) => {
   }
 };
 
+/**
+ * This function generates random six character string.
+ * @returns {string} 6 characters-long string
+ */
 const generateRandomString = () => {
   const randString = Math.random().toString(36).slice(2);
   return randString.substring(0, 6);
 };
 
-const findKeyByVal = (obj, objKey, value) => {
-  for (const keys in obj) {
-    if (value === obj[keys][objKey]) return keys;
-  }
-};
-
+/**
+ * This function returns url id owned by the user.
+ * @param {object} urls This is database of urls
+ * @param {string} userId This is id unique to each user
+ * @returns urls specific to the given user id
+ */
 const urlsForUser = (urls, userId) => {
   const userURLs = {};
   for (const urlId in urls) {
@@ -36,6 +40,5 @@ const urlsForUser = (urls, userId) => {
 module.exports = {
   getUserByEmail,
   generateRandomString,
-  findKeyByVal,
   urlsForUser,
 };
