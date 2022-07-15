@@ -1,7 +1,13 @@
-const getUserByEmail = (obj, email) => {
-  for (const key in obj) {
-    if (email === obj[key].email) {
-      return key;
+/**
+ * This function returns user that has the given email id.
+ * @param {object} users
+ * @param {string} email
+ * @returns {string} Id of the maching user
+ */
+const getUserByEmail = (users, email) => {
+  for (const userId in users) {
+    if (email === users[userId].email) {
+      return userId;
     }
   }
 };
