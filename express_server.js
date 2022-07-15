@@ -1,5 +1,6 @@
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
 
@@ -100,7 +101,7 @@ app.get('/register', (req, res) => {
 app.get('/login', (req, res) => {
   const id = req.cookies['user_id'];
   if (id) {
-    res.redirect('/urls');
+    return res.redirect('/urls');
   }
   const templateVar = {user: undefined};
   res.render('urls_login', templateVar);
@@ -199,11 +200,14 @@ app.post('/login', (req, res) => {
   if (!lookForObjectKeys(users, 'email', email)) {
     res.status(403);
     return res.send('Error: 403; email not found');
-  } else if (!lookForObjectKeys(users, 'password', password)) {
+  } 
+  const id = findKeyByVal(users, 'email', email);
+  console.log(id)
+  const userPassword = users[id].hashedPassword;
+  if (!bcrypt.compareSync(password, userPassword)) {
     res.status(403);
     return res.send('Error: 403; password does not match');
   }
-  const id = findKeyByVal(users, 'email', email);
   res.cookie('user_id', id);
   res.redirect('/urls');
 });
@@ -215,6 +219,8 @@ app.post('/register', (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  
   if (email === '' || password === '') {
     res.status(400);
     return res.send('Error:400; Invalid email or password');
@@ -223,7 +229,8 @@ app.post('/register', (req, res) => {
     res.status(400);
     return res.send('Error:400; user already exists');
   }
-  users[id] = {id, email, password };
+  users[id] = {id, email, hashedPassword };
+  console.log(users)
   res.cookie('user_id', id);
   res.redirect('/urls');
 });
