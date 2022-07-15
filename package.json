@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "./node_modules/.bin/nodemon -L express_server.js",
-    "test": "mocha"
+    "test": "mocha",
+    "lint": "eslint --fix './**/*.js'",
+    "format": "prettier --write .",
+    "prepare": "husky install"
   },
   "repository": {
     "type": "git",
@@ -26,7 +29,16 @@
   },
   "devDependencies": {
     "chai": "^4.3.6",
+    "eslint": "^8.19.0",
+    "eslint-config-prettier": "^8.5.0",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
     "mocha": "^10.0.0",
-    "nodemon": "^2.0.19"
+    "nodemon": "^2.0.19",
+    "prettier": "^2.7.1"
+  },
+  "lint-staged": {
+    "*.js": "eslint --cache --fix",
+    "*.{js,css,md}": "prettier --write"
   }
 }
