@@ -5,21 +5,12 @@ const {
   getUserByEmail,
   generateRandomString,
   findKeyByVal,
+  urlsForUser,
 } = require("./helper");
 
 // setting up databases
 const urlDatabase = {};
 const users = {};
-
-const urlsForUser = (id) => {
-  const userURL = {};
-  for (const keys in urlDatabase) {
-    if (id === urlDatabase[keys].userID) {
-      userURL[keys] = urlDatabase[keys].longURL;
-    }
-  }
-  return userURL;
-};
 
 // setting up express server
 const app = express();
@@ -57,11 +48,11 @@ app.get("/urls", (req, res) => {
   }
   const user = users[userId];
   if (!user) {
-    req.session.user_id = null; // eslint-disable-line camelcase
+    req.session = null; // eslint-disable-line camelcase
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
-  const userUrlDatabase = urlsForUser(userId);
+  const userUrlDatabase = urlsForUser(urlDatabase, userId);
   const templateVar = { user: user, urls: userUrlDatabase };
   res.render("urls_index", templateVar);
 });
@@ -69,7 +60,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userId = req.session.user_id;
   if (!userId || !users[userId]) {
-    req.session.user_id = null; // eslint-disable-line camelcase
+    req.session = null; // eslint-disable-line camelcase
     return res.redirect("/login");
   }
   const user = users[userId];
@@ -82,7 +73,7 @@ app.get("/register", (req, res) => {
   if (userId && users[userId]) {
     return res.redirect("/urls");
   }
-  req.session.user_id = null; // eslint-disable-line camelcase
+  req.session = null; // eslint-disable-line camelcase
   const templateVar = { user: undefined };
   res.render("urls_registration", templateVar);
 });
@@ -92,7 +83,7 @@ app.get("/login", (req, res) => {
   if (userId && users[userId]) {
     return res.redirect("/urls");
   }
-  req.session.user_id = null; // eslint-disable-line camelcase
+  req.session = null; // eslint-disable-line camelcase
   const templateVar = { user: undefined };
   res.render("urls_login", templateVar);
 });
@@ -104,7 +95,7 @@ app.post("/urls", (req, res) => {
     return res.send("Error : 401, user not looged in");
   }
   if (!users[userId]) {
-    req.session.user_id = null; // eslint-disable-line camelcase
+    req.session = null; // eslint-disable-line camelcase
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -120,7 +111,7 @@ app.get("/urls/:id", (req, res) => {
     return res.send("Error : 401, user not looged in");
   }
   if (!users[userId]) {
-    req.session.user_id = null; // eslint-disable-line camelcase
+    req.session = null; // eslint-disable-line camelcase
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -129,8 +120,8 @@ app.get("/urls/:id", (req, res) => {
     res.status(404);
     return res.send("Error : 404, id not found");
   }
-  const userUrlData = urlsForUser(userId);
-  if (!Object.hasOwn(userUrlData, id)) {
+  const userUrlData = urlsForUser(urlDatabase, userId);
+  if (!userUrlData[id]) {
     res.status(403);
     return res.send("Error: 403, access denied");
   }
@@ -159,7 +150,7 @@ app.post("/urls/:id/delete", (req, res) => {
     return res.send("Error : 401, user not looged in");
   }
   if (!users[userId]) {
-    req.session.user_id = null; // eslint-disable-line camelcase
+    req.session = null; // eslint-disable-line camelcase
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -168,8 +159,8 @@ app.post("/urls/:id/delete", (req, res) => {
     res.status(404);
     return res.send("Error : 404, id not found");
   }
-  const userUrlData = urlsForUser(userId);
-  if (!Object.hasOwn(userUrlData, id)) {
+  const userUrlData = urlsForUser(urlDatabase, userId);
+  if (!userUrlData[id]) {
     res.status(403);
     return res.send("Error: 403, access denied");
   }
@@ -184,7 +175,7 @@ app.post("/urls/:id/edit", (req, res) => {
     return res.send("Error : 401, user not looged in");
   }
   if (!users[userId]) {
-    req.session.user_id = null; // eslint-disable-line camelcase
+    req.session = null; // eslint-disable-line camelcase
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -193,8 +184,8 @@ app.post("/urls/:id/edit", (req, res) => {
     res.status(404);
     return res.send("Error : 404, id not found");
   }
-  const userUrlData = urlsForUser(userId);
-  if (!Object.hasOwn(userUrlData, id)) {
+  const userUrlData = urlsForUser(urlDatabase, userId);
+  if (!userUrlData[id]) {
     res.status(403);
     return res.send("Error: 403, access denied");
   }
@@ -214,7 +205,7 @@ app.post("/urls/:id/update", (req, res) => {
     return res.send("Error : 401, user not looged in");
   }
   if (!users[userId]) {
-    req.session.user_id = null; // eslint-disable-line camelcase
+    req.session = null; // eslint-disable-line camelcase
     res.status(404);
     return res.send("Error: 404; User not found!");
   }
@@ -246,8 +237,8 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  req.session.user_id = null; // eslint-disable-line camelcase
-  res.redirect("/urls");
+  req.session = null; // eslint-disable-line camelcase
+  res.redirect("/login");
 });
 
 app.post("/register", (req, res) => {

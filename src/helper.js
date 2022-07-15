@@ -23,8 +23,19 @@ const findKeyByVal = (obj, objKey, value) => {
   }
 };
 
+const urlsForUser = (urls, userId) => {
+  const userURLs = {};
+  for (const urlId in urls) {
+    if (userId === urls[urlId].userID) {
+      userURLs[urlId] = urls[urlId].longURL;
+    }
+  }
+  return userURLs;
+};
+
 module.exports = {
   getUserByEmail,
   generateRandomString,
   findKeyByVal,
+  urlsForUser,
 };
