@@ -1,7 +1,7 @@
 const express = require("express");
-const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-const getUserByEmail = require('./helper')
+const getUserByEmail = require('./helper');
 const app = express();
 const PORT = 8080;
 
@@ -9,7 +9,7 @@ app.set('view engine', 'ejs');
 app.use(cookieSession({
   name: "session",
   keys: ['really strong key', '13678g!hui76?']
-}))
+}));
 app.use(express.urlencoded({ extended: true }));
 
 const urlDatabase = {
@@ -49,7 +49,11 @@ const urlsForUser = (id) => {
 };
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const userId = req.session.user_id;
+  if (!userId) {
+    return res.redirect('/login');
+  }
+  res.redirect('/urls');
 });
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -64,9 +68,9 @@ app.get('/urls', (req, res) => {
     return res.send('Error: 401; User not logged in!');
   }
   const user = users[userId];
-  if(!user){
+  if (!user) {
     req.session.user_id = null;
-    res.status(404)
+    res.status(404);
     return res.send('Error: 404; User not found!');
   }
   const userUrlDatabase = urlsForUser(userId);
@@ -111,15 +115,14 @@ app.post('/urls', (req, res) => {
     res.status(401);
     return res.send('Error : 401, user not looged in');
   }
-  if(!users[userId]){
+  if (!users[userId]) {
     req.session.user_id = null;
-    res.status(404)
+    res.status(404);
     return res.send('Error: 404; User not found!');
   }
   const id = generateRandomString();
   const url = req.body;
   urlDatabase[id] = {'longURL': url.longURL, userID: userId };
-  console.log(urlDatabase);
   return res.redirect(`/urls/${id}`);
 });
 
@@ -128,9 +131,9 @@ app.get('/urls/:id', (req, res) => {
   if (!userId) {
     return res.send('Error : 401, user not looged in');
   }
-  if(!users[userId]){
+  if (!users[userId]) {
     req.session.user_id = null;
-    res.status(404)
+    res.status(404);
     return res.send('Error: 404; User not found!');
   }
   const id = req.params.id;
@@ -163,9 +166,9 @@ app.post('/urls/:id/delete', (req, res) => {
     res.status(401);
     return res.send('Error : 401, user not looged in');
   }
-  if(!users[userId]){
+  if (!users[userId]) {
     req.session.user_id = null;
-    res.status(404)
+    res.status(404);
     return res.send('Error: 404; User not found!');
   }
   const id = req.params.id;
@@ -188,9 +191,9 @@ app.post('/urls/:id/edit', (req, res) => {
     res.status(401);
     return res.send('Error : 401, user not looged in');
   }
-  if(!users[userId]){
+  if (!users[userId]) {
     req.session.user_id = null;
-    res.status(404)
+    res.status(404);
     return res.send('Error: 404; User not found!');
   }
   const id = req.params.id;
@@ -214,9 +217,9 @@ app.post('/urls/:id/update', (req, res) => {
     res.status(401);
     return res.send('Error : 401, user not looged in');
   }
-  if(!users[userId]){
+  if (!users[userId]) {
     req.session.user_id = null;
-    res.status(404)
+    res.status(404);
     return res.send('Error: 404; User not found!');
   }
   const id = req.params.id;
@@ -235,7 +238,7 @@ app.post('/login', (req, res) => {
   if (!getUserByEmail(users, email)) {
     res.status(403);
     return res.send('Error: 403; email not found');
-  } 
+  }
   const id = findKeyByVal(users, 'email', email);
   const userPassword = users[id].hashedPassword;
   if (!bcrypt.compareSync(password, userPassword)) {
